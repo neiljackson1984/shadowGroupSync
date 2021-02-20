@@ -59,13 +59,18 @@ Function Get-SourceObjects($searchbase, $domain, $type, $scope) {
     $multiobj = @()
     $obj = $null
     $bases = $searchbase.Split(";")
+    $types = $type.Split(";")
 
     #If the searchbase is an array of searchbases, recall the function, concatenate the results and pass back the complete set.
     if ($bases.Count -gt 1) {
         foreach ($base in $bases) {
             $multiobj += Get-SourceObjects $base $domain $type $scope
         }
-
+        return $multiobj
+    } elseif ($types.Count -gt 1) {
+        foreach ($type in $types) {
+            $multiobj += Get-SourceObjects $searchbase $domain $type $scope
+        }
         return $multiobj
     }
     else {
@@ -78,7 +83,7 @@ Function Get-SourceObjects($searchbase, $domain, $type, $scope) {
                 "user-mail-enabled" { Get-ADUser -Filter { Mail -like '*' -and Enabled -eq $true } -SearchBase $searchbase -SearchScope $scope -server $domain -ErrorAction Stop }
                 { ($_ -eq "user") -or ($_ -eq "user-enabled") } { Get-ADUser -Filter { Enabled -eq $true } -SearchBase $searchbase -SearchScope $scope -server $domain -ErrorAction Stop }
                 "user-disabled" { Get-ADUser -Filter { Enabled -eq $false } -SearchBase $searchbase -SearchScope $scope -server $domain -ErrorAction Stop }
-
+        
                 default {
                     Write-Error "Invalid type specified"
                     Exit
